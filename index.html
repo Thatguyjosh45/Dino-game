@@ -16,7 +16,7 @@
     }
     #game {
       width: 100vw;
-      height: 200px;
+      height: 300px; /* Increased height */
       background: url('https://images.unsplash.com/photo-1527475549522-94b2a376ce13?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8Z3Jhc3MlMjBiYWNrZ3JvdW5kfGVufDB8fDB8fHww') repeat bottom;
       background-size: cover;
       border: 2px solid #333;
@@ -157,22 +157,22 @@
       isJumping = true;
       let position = 0;
       let upInterval = setInterval(() => {
-        if (position >= 100) {
+        if (position >= 150) { // Increased jump height
           clearInterval(upInterval);
           let downInterval = setInterval(() => {
             if (position <= 0) {
               clearInterval(downInterval);
               isJumping = false;
             } else {
-              position -= 5;
+              position -= 6; // Faster fall
               dino.style.bottom = position + 'px';
             }
-          }, 18);
+          }, 12); // Faster animation
         } else {
-          position += 5;
+          position += 6; // Faster rise
           dino.style.bottom = position + 'px';
         }
-      }, 18);
+      }, 12); // Faster animation
     }
 
     function createObstacle() {
