@@ -17,10 +17,13 @@
     #game {
       width: 100vw;
       height: 200px;
-      background: url('https://images.unsplash.com/photo-1527475549522-94b2a376ce13?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8Z3Jhc3MlMjBiYWNrZ3JvdW5kfGVufDB8fDB8fHww') repeat-x bottom;
+      background: url('https://images.unsplash.com/photo-1527475549522-94b2a376ce13?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8Z3Jhc3MlMjBiYWNrZ3JvdW5kfGVufDB8fDB8fHww') repeat bottom;
       background-size: cover;
       border: 2px solid #333;
-      position: relative;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
       overflow: hidden;
     }
     #dino {
@@ -41,46 +44,42 @@
       bottom: 0;
       right: -60px;
     }
-    #scoreBoard {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 5px 15px;
-      background: rgba(255,255,255,0.9);
-      font-size: 18px;
+    #score {
+      position: absolute;
+      top: -40px;
+      left: 0;
+      font-size: 20px;
+      color: #333;
+      font-weight: bold;
     }
     #settings {
       position: absolute;
-      top: 50px;
+      top: 10px;
       right: 10px;
       background: rgba(255,255,255,0.9);
       padding: 10px;
       border-radius: 8px;
       font-size: 14px;
-      z-index: 10;
     }
-    @media (max-width: 600px) {
-      #dino {
-        width: 40px;
-        height: 40px;
-        left: 30px;
-      }
-      .obstacle {
-        width: 40px;
-        height: 40px;
-      }
-      #game {
-        height: 150px;
-      }
+    #startBtn {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      padding: 12px 24px;
+      font-size: 20px;
+      background: #28a745;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      z-index: 9999;
     }
   </style>
 </head>
 <body>
-  <div id="scoreBoard">
-    <div id="score">Score: 0</div>
-    <div id="highScore">High Score: 0</div>
-  </div>
   <div id="game">
+    <div id="score">Score: 0</div>
     <div id="dino"></div>
     <div id="settings">
       <label>Difficulty:
@@ -91,32 +90,35 @@
         </select>
       </label>
       <button id="pauseBtn">Pause</button>
+      <button id="restartBtn">Restart</button>
     </div>
+    <button id="startBtn">Start Game</button>
   </div>
   <script>
     const dino = document.getElementById('dino');
     const game = document.getElementById('game');
     const scoreDisplay = document.getElementById('score');
-    const highScoreDisplay = document.getElementById('highScore');
     const difficultySelect = document.getElementById('difficulty');
     const pauseBtn = document.getElementById('pauseBtn');
+    const restartBtn = document.getElementById('restartBtn');
+    const startBtn = document.getElementById('startBtn');
 
     let isJumping = false;
     let score = 0;
     let highScore = localStorage.getItem('highScore') || 0;
-    highScoreDisplay.textContent = `High Score: ${highScore}`;
     let gamePaused = false;
     let gameOver = false;
     let currentObstacleSpeed = parseInt(difficultySelect.value);
+    let gameStarted = false;
 
     document.addEventListener('keydown', function(e) {
-      if (e.code === 'Space' && !isJumping && !gamePaused && !gameOver) {
+      if (e.code === 'Space' && !isJumping && !gamePaused && !gameOver && gameStarted) {
         jump();
       }
     });
 
     game.addEventListener('click', function() {
-      if (!isJumping && !gamePaused && !gameOver) {
+      if (!isJumping && !gamePaused && !gameOver && gameStarted) {
         jump();
       }
     });
@@ -128,6 +130,16 @@
     pauseBtn.addEventListener('click', function() {
       gamePaused = !gamePaused;
       pauseBtn.textContent = gamePaused ? 'Resume' : 'Pause';
+    });
+
+    restartBtn.addEventListener('click', function() {
+      location.reload();
+    });
+
+    startBtn.addEventListener('click', function() {
+      gameStarted = true;
+      startBtn.style.display = 'none';
+      createObstacle();
     });
 
     function jump() {
@@ -153,6 +165,7 @@
     }
 
     function createObstacle() {
+      if (!gameStarted) return;
       const obstacle = document.createElement('div');
       obstacle.classList.add('obstacle');
       game.appendChild(obstacle);
@@ -174,7 +187,6 @@
             localStorage.setItem('highScore', score);
             highScore = score;
           }
-          highScoreDisplay.textContent = `High Score: ${highScore}`;
           alert('Game Over! Your score: ' + score + '\nHigh Score: ' + highScore);
           location.reload();
         } else {
@@ -186,11 +198,9 @@
 
       moveObstacle();
       setTimeout(() => {
-        if (!gameOver) createObstacle();
+        if (!gameOver && gameStarted) createObstacle();
       }, Math.random() * 1500 + 1000);
     }
-
-    createObstacle();
   </script>
 </body>
 </html>
