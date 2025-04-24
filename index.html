@@ -9,17 +9,18 @@
       margin: 0;
       padding: 0;
       font-family: 'Segoe UI', sans-serif;
-      background: #f4f4f4;
+      background: #121212;
       width: 100%;
       height: 100%;
       overflow: hidden;
+      color: white;
     }
     #game {
       width: 100vw;
-      height: 300px; /* Increased height */
+      height: 350px;
       background: url('https://images.unsplash.com/photo-1527475549522-94b2a376ce13?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8Z3Jhc3MlMjBiYWNrZ3JvdW5kfGVufDB8fDB8fHww') repeat bottom;
       background-size: cover;
-      border: 2px solid #333;
+      border-top: 4px solid #fff;
       position: absolute;
       top: 50%;
       left: 50%;
@@ -34,7 +35,6 @@
       position: absolute;
       bottom: 0;
       left: 60px;
-      transition: bottom 0.1s ease-out;
     }
     .obstacle {
       width: 60px;
@@ -45,11 +45,6 @@
       bottom: 0;
       right: -60px;
     }
-    #score, #highScoreDisplay {
-      font-size: 18px;
-      font-weight: bold;
-      margin-right: 10px;
-    }
     #hud {
       position: absolute;
       top: 10px;
@@ -59,14 +54,19 @@
       gap: 10px;
       align-items: center;
     }
+    #score, #highScoreDisplay {
+      font-size: 18px;
+      font-weight: bold;
+    }
     #settings {
       position: absolute;
       top: 10px;
       right: 10px;
-      background: rgba(255,255,255,0.9);
+      background: rgba(255, 255, 255, 0.1);
       padding: 10px;
       border-radius: 8px;
       font-size: 14px;
+      color: white;
     }
     #startBtn {
       position: absolute;
@@ -80,10 +80,18 @@
       background-color: #4CAF50;
       color: white;
       cursor: pointer;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }
     #startBtn:hover {
       background-color: #45a049;
+    }
+    @media (max-width: 600px) {
+      #game {
+        height: 300px;
+      }
+      #dino, .obstacle {
+        width: 40px;
+        height: 40px;
+      }
     }
   </style>
 </head>
@@ -121,8 +129,7 @@
     let gamePaused = false;
     let gameOver = false;
     let gameStarted = false;
-    let currentObstacleSpeed = parseInt(difficultySelect.value);
-    let baseObstacleSpeed = currentObstacleSpeed;
+    let baseObstacleSpeed = parseInt(difficultySelect.value);
 
     highScoreDisplay.textContent = `High Score: ${highScore}`;
 
@@ -133,6 +140,12 @@
     });
 
     game.addEventListener('click', function() {
+      if (!isJumping && !gamePaused && !gameOver && gameStarted) {
+        jump();
+      }
+    });
+
+    game.addEventListener('touchstart', function() {
       if (!isJumping && !gamePaused && !gameOver && gameStarted) {
         jump();
       }
@@ -156,23 +169,32 @@
     function jump() {
       isJumping = true;
       let position = 0;
-      let upInterval = setInterval(() => {
-        if (position >= 150) { // Increased jump height
-          clearInterval(upInterval);
-          let downInterval = setInterval(() => {
-            if (position <= 0) {
-              clearInterval(downInterval);
-              isJumping = false;
-            } else {
-              position -= 6; // Faster fall
-              dino.style.bottom = position + 'px';
-            }
-          }, 12); // Faster animation
-        } else {
-          position += 6; // Faster rise
+      let velocity = 10;
+      let gravity = 0.5;
+
+      function up() {
+        if (velocity > 0) {
+          position += velocity;
+          velocity -= gravity;
           dino.style.bottom = position + 'px';
+          requestAnimationFrame(up);
+        } else {
+          fall();
         }
-      }, 12); // Faster animation
+      }
+
+      function fall() {
+        if (position > 0) {
+          velocity -= gravity;
+          position -= velocity;
+          dino.style.bottom = Math.max(position, 0) + 'px';
+          requestAnimationFrame(fall);
+        } else {
+          isJumping = false;
+        }
+      }
+
+      up();
     }
 
     function createObstacle() {
@@ -180,7 +202,7 @@
       obstacle.classList.add('obstacle');
       game.appendChild(obstacle);
       let obstaclePosition = game.offsetWidth;
-      let localSpeed = baseObstacleSpeed + Math.floor(score / 10);
+      let localSpeed = baseObstacleSpeed;
 
       function moveObstacle() {
         if (gamePaused || gameOver) return;
@@ -189,7 +211,7 @@
           game.removeChild(obstacle);
           score++;
           scoreDisplay.textContent = `Score: ${score}`;
-          localSpeed = baseObstacleSpeed + Math.floor(score / 10);
+          localSpeed = baseObstacleSpeed + Math.floor(score / 5); // smoother increase
         } else if (
           obstaclePosition > 60 && obstaclePosition < 120 &&
           parseInt(dino.style.bottom) < 60
@@ -211,7 +233,7 @@
       moveObstacle();
       setTimeout(() => {
         if (!gameOver && gameStarted) createObstacle();
-      }, Math.random() * 1500 + 1000);
+      }, Math.random() * 1000 + 800);
     }
   </script>
 </body>
