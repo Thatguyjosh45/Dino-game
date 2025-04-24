@@ -34,6 +34,7 @@
       position: absolute;
       bottom: 0;
       left: 60px;
+      transition: bottom 0.1s ease-out;
     }
     .obstacle {
       width: 60px;
@@ -44,13 +45,19 @@
       bottom: 0;
       right: -60px;
     }
-    #score {
-      position: absolute;
-      top: -40px;
-      left: 0;
-      font-size: 20px;
-      color: #333;
+    #score, #highScoreDisplay {
+      font-size: 18px;
       font-weight: bold;
+      margin-right: 10px;
+    }
+    #hud {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      display: flex;
+      flex-direction: row;
+      gap: 10px;
+      align-items: center;
     }
     #settings {
       position: absolute;
@@ -66,20 +73,26 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      padding: 12px 24px;
-      font-size: 20px;
-      background: #28a745;
-      color: white;
+      padding: 15px 30px;
+      font-size: 18px;
       border: none;
       border-radius: 8px;
+      background-color: #4CAF50;
+      color: white;
       cursor: pointer;
-      z-index: 9999;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    #startBtn:hover {
+      background-color: #45a049;
     }
   </style>
 </head>
 <body>
   <div id="game">
-    <div id="score">Score: 0</div>
+    <div id="hud">
+      <div id="score">Score: 0</div>
+      <div id="highScoreDisplay">High Score: 0</div>
+    </div>
     <div id="dino"></div>
     <div id="settings">
       <label>Difficulty:
@@ -90,7 +103,6 @@
         </select>
       </label>
       <button id="pauseBtn">Pause</button>
-      <button id="restartBtn">Restart</button>
     </div>
     <button id="startBtn">Start Game</button>
   </div>
@@ -98,9 +110,9 @@
     const dino = document.getElementById('dino');
     const game = document.getElementById('game');
     const scoreDisplay = document.getElementById('score');
+    const highScoreDisplay = document.getElementById('highScoreDisplay');
     const difficultySelect = document.getElementById('difficulty');
     const pauseBtn = document.getElementById('pauseBtn');
-    const restartBtn = document.getElementById('restartBtn');
     const startBtn = document.getElementById('startBtn');
 
     let isJumping = false;
@@ -108,8 +120,11 @@
     let highScore = localStorage.getItem('highScore') || 0;
     let gamePaused = false;
     let gameOver = false;
-    let currentObstacleSpeed = parseInt(difficultySelect.value);
     let gameStarted = false;
+    let currentObstacleSpeed = parseInt(difficultySelect.value);
+    let baseObstacleSpeed = currentObstacleSpeed;
+
+    highScoreDisplay.textContent = `High Score: ${highScore}`;
 
     document.addEventListener('keydown', function(e) {
       if (e.code === 'Space' && !isJumping && !gamePaused && !gameOver && gameStarted) {
@@ -124,16 +139,12 @@
     });
 
     difficultySelect.addEventListener('change', function() {
-      currentObstacleSpeed = parseInt(this.value);
+      baseObstacleSpeed = parseInt(this.value);
     });
 
     pauseBtn.addEventListener('click', function() {
       gamePaused = !gamePaused;
       pauseBtn.textContent = gamePaused ? 'Resume' : 'Pause';
-    });
-
-    restartBtn.addEventListener('click', function() {
-      location.reload();
     });
 
     startBtn.addEventListener('click', function() {
@@ -165,11 +176,11 @@
     }
 
     function createObstacle() {
-      if (!gameStarted) return;
       const obstacle = document.createElement('div');
       obstacle.classList.add('obstacle');
       game.appendChild(obstacle);
       let obstaclePosition = game.offsetWidth;
+      let localSpeed = baseObstacleSpeed + Math.floor(score / 10);
 
       function moveObstacle() {
         if (gamePaused || gameOver) return;
@@ -178,6 +189,7 @@
           game.removeChild(obstacle);
           score++;
           scoreDisplay.textContent = `Score: ${score}`;
+          localSpeed = baseObstacleSpeed + Math.floor(score / 10);
         } else if (
           obstaclePosition > 60 && obstaclePosition < 120 &&
           parseInt(dino.style.bottom) < 60
@@ -190,7 +202,7 @@
           alert('Game Over! Your score: ' + score + '\nHigh Score: ' + highScore);
           location.reload();
         } else {
-          obstaclePosition -= currentObstacleSpeed;
+          obstaclePosition -= localSpeed;
           obstacle.style.left = obstaclePosition + 'px';
           requestAnimationFrame(moveObstacle);
         }
