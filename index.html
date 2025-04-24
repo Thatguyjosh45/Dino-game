@@ -14,9 +14,10 @@
       height: 100%;
       overflow: hidden;
     }
+
     #game {
       width: 100vw;
-      height: 200px;
+      height: 300px;
       background: url('https://images.unsplash.com/photo-1527475549522-94b2a376ce13?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8Z3Jhc3MlMjBiYWNrZ3JvdW5kfGVufDB8fDB8fHww') repeat bottom;
       background-size: cover;
       border: 2px solid #333;
@@ -26,6 +27,7 @@
       transform: translate(-50%, -50%);
       overflow: hidden;
     }
+
     #dino {
       width: 60px;
       height: 60px;
@@ -36,6 +38,7 @@
       left: 60px;
       transition: bottom 0.1s ease-out;
     }
+
     .obstacle {
       width: 60px;
       height: 60px;
@@ -45,30 +48,23 @@
       bottom: 0;
       right: -60px;
     }
-    /* Updated HUD for score and high score */
+
     #hud {
       position: absolute;
       top: 10px;
       left: 10px;
       display: flex;
       flex-direction: row;
-      gap: 15px;
+      gap: 10px;
       align-items: center;
-      background-color: rgba(0, 0, 0, 0.6); /* Darker background for better contrast */
-      padding: 10px;
-      border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }
+
     #score, #highScoreDisplay {
-      font-size: 20px;
+      font-size: 18px;
       font-weight: bold;
-      color: #fff;
-      text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7); /* Text shadow for better readability */
-      background-color: rgba(0, 0, 0, 0.7);
-      padding: 10px;
-      border-radius: 8px;
+      margin-right: 10px;
     }
-    /* Style for settings */
+
     #settings {
       position: absolute;
       top: 10px;
@@ -78,12 +74,32 @@
       border-radius: 8px;
       font-size: 14px;
     }
-    /* Start button style */
-    #startBtn {
+
+    #startMenu {
       position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 30px;
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+
+    #startMenu h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+    }
+
+    #startMenu p {
+      font-size: 1rem;
+      margin-bottom: 20px;
+      color: #ddd;
+    }
+
+    #startBtn {
       padding: 15px 30px;
       font-size: 18px;
       border: none;
@@ -93,22 +109,44 @@
       cursor: pointer;
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }
+
     #startBtn:hover {
       background-color: #45a049;
     }
-    /* Updated Pause Button */
-    #pauseBtn {
-      background-color: #ff9800;
+
+    /* Game Over Screen */
+    #gameOverScreen {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.8);
       color: white;
-      padding: 10px;
-      font-size: 14px;
-      border-radius: 5px;
-      cursor: pointer;
+      padding: 40px;
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+      display: none;
+    }
+
+    #gameOverScreen h2 {
+      font-size: 2rem;
+      margin-bottom: 20px;
+    }
+
+    #gameOverScreen button {
+      padding: 10px 20px;
+      font-size: 16px;
       border: none;
+      border-radius: 8px;
+      background-color: #4CAF50;
+      color: white;
+      cursor: pointer;
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }
-    #pauseBtn:hover {
-      background-color: #e68900;
+
+    #gameOverScreen button:hover {
+      background-color: #45a049;
     }
   </style>
 </head>
@@ -118,7 +156,9 @@
       <div id="score">Score: 0</div>
       <div id="highScoreDisplay">High Score: 0</div>
     </div>
+
     <div id="dino"></div>
+
     <div id="settings">
       <label>Difficulty:
         <select id="difficulty">
@@ -129,8 +169,21 @@
       </label>
       <button id="pauseBtn">Pause</button>
     </div>
-    <button id="startBtn">Start Game</button>
+
+    <div id="startMenu">
+      <h1>DINO RUNNER</h1>
+      <p>Press SPACE or TAP the screen to jump<br />Avoid obstacles and survive!</p>
+      <button id="startBtn">Start Game</button>
+    </div>
+
+    <div id="gameOverScreen">
+      <h2>Game Over!</h2>
+      <p>Your Score: <span id="finalScore">0</span></p>
+      <button id="restartBtn">Restart</button>
+      <button id="mainMenuBtn">Back to Menu</button>
+    </div>
   </div>
+
   <script>
     const dino = document.getElementById('dino');
     const game = document.getElementById('game');
@@ -139,6 +192,11 @@
     const difficultySelect = document.getElementById('difficulty');
     const pauseBtn = document.getElementById('pauseBtn');
     const startBtn = document.getElementById('startBtn');
+    const startMenu = document.getElementById('startMenu');
+    const gameOverScreen = document.getElementById('gameOverScreen');
+    const finalScore = document.getElementById('finalScore');
+    const restartBtn = document.getElementById('restartBtn');
+    const mainMenuBtn = document.getElementById('mainMenuBtn');
 
     let isJumping = false;
     let score = 0;
@@ -174,30 +232,38 @@
 
     startBtn.addEventListener('click', function() {
       gameStarted = true;
-      startBtn.style.display = 'none';
+      startMenu.style.display = 'none';
       createObstacle();
+    });
+
+    restartBtn.addEventListener('click', function() {
+      location.reload();
+    });
+
+    mainMenuBtn.addEventListener('click', function() {
+      location.reload();
     });
 
     function jump() {
       isJumping = true;
       let position = 0;
       let upInterval = setInterval(() => {
-        if (position >= 100) {
+        if (position >= 140) {
           clearInterval(upInterval);
           let downInterval = setInterval(() => {
             if (position <= 0) {
               clearInterval(downInterval);
               isJumping = false;
             } else {
-              position -= 5;
+              position -= 6;
               dino.style.bottom = position + 'px';
             }
-          }, 18);
+          }, 14);
         } else {
-          position += 5;
+          position += 6;
           dino.style.bottom = position + 'px';
         }
-      }, 18);
+      }, 14);
     }
 
     function createObstacle() {
@@ -220,12 +286,12 @@
           parseInt(dino.style.bottom) < 60
         ) {
           gameOver = true;
+          finalScore.textContent = score;
           if (score > highScore) {
             localStorage.setItem('highScore', score);
             highScore = score;
           }
-          alert('Game Over! Your score: ' + score + '\nHigh Score: ' + highScore);
-          location.reload();
+          gameOverScreen.style.display = 'block';
         } else {
           obstaclePosition -= localSpeed;
           obstacle.style.left = obstaclePosition + 'px';
@@ -234,9 +300,24 @@
       }
 
       moveObstacle();
-      setTimeout(() => {
-        if (!gameOver && gameStarted) createObstacle();
-      }, Math.random() * 1500 + 1000);
+      setTimeout(createObstacle, Math.random() * 2000 + 1000);
+    }
+
+    function startGame() {
+      score = 0;
+      scoreDisplay.textContent = `Score: ${score}`;
+      gameStarted = true;
+      startMenu.style.display = 'none';
+      gameOverScreen.style.display = 'none';
+      createObstacle();
+    }
+
+    function resetGame() {
+      score = 0;
+      scoreDisplay.textContent = `Score: ${score}`;
+      gameOver = false;
+      gameOverScreen.style.display = 'none';
+      createObstacle();
     }
   </script>
 </body>
