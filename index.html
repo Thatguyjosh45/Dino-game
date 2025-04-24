@@ -16,9 +16,11 @@
     }
     #game {
       width: 100vw;
-      height: 200px;
+      height: 30vh;
+      max-height: 300px;
       background: url('https://images.unsplash.com/photo-1527475549522-94b2a376ce13?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8Z3Jhc3MlMjBiYWNrZ3JvdW5kfGVufDB8fDB8fHww') repeat;
       background-size: cover;
+      background-position: bottom;
       border: 2px solid #333;
       position: absolute;
       top: 50%;
@@ -27,17 +29,21 @@
       overflow: hidden;
     }
     #dino {
-      width: 60px;
-      height: 60px;
+      width: 10vw;
+      height: 10vw;
+      max-width: 60px;
+      max-height: 60px;
       background: url('https://m.media-amazon.com/images/I/51SFb3PhnUS._AC_UF894,1000_QL80_.jpg') no-repeat center center;
       background-size: cover;
       position: absolute;
       bottom: 0;
-      left: 60px;
+      left: 10vw;
     }
     .obstacle {
-      width: 60px;
-      height: 60px;
+      width: 10vw;
+      height: 10vw;
+      max-width: 60px;
+      max-height: 60px;
       background: url('https://koraktor.de/metior/graphics/metior.png') no-repeat center center;
       background-size: cover;
       position: absolute;
@@ -48,35 +54,72 @@
       position: absolute;
       top: -40px;
       left: 0;
-      font-size: 20px;
+      font-size: 16px;
       color: #333;
       font-weight: bold;
+    }
+    #settings {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(255, 255, 255, 0.8);
+      padding: 10px;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+    #pause-btn {
+      margin-top: 5px;
     }
   </style>
 </head>
 <body>
   <div id="game">
-    <div id="score">Score: 0</div>
+    <div id="score">Score: 0 | High Score: 0</div>
     <div id="dino"></div>
+    <div id="settings">
+      <label for="difficulty">Difficulty:</label>
+      <select id="difficulty">
+        <option value="4">Easy</option>
+        <option value="6" selected>Medium</option>
+        <option value="8">Hard</option>
+      </select><br>
+      <button id="pause-btn">Pause</button>
+    </div>
   </div>
   <script>
     const dino = document.getElementById('dino');
     const game = document.getElementById('game');
     const scoreDisplay = document.getElementById('score');
+    const difficultySelect = document.getElementById('difficulty');
+    const pauseBtn = document.getElementById('pause-btn');
 
     let isJumping = false;
     let score = 0;
+    let highScore = localStorage.getItem('highScore') || 0;
+    let isPaused = false;
+    let obstacleSpeed = parseInt(difficultySelect.value);
+
+    scoreDisplay.textContent = `Score: ${score} | High Score: ${highScore}`;
 
     document.addEventListener('keydown', function(e) {
-      if (e.code === 'Space' && !isJumping) {
+      if (e.code === 'Space' && !isJumping && !isPaused) {
         jump();
       }
     });
 
     game.addEventListener('click', function() {
-      if (!isJumping) {
+      if (!isJumping && !isPaused) {
         jump();
       }
+    });
+
+    difficultySelect.addEventListener('change', () => {
+      obstacleSpeed = parseInt(difficultySelect.value);
+    });
+
+    pauseBtn.addEventListener('click', () => {
+      isPaused = !isPaused;
+      pauseBtn.textContent = isPaused ? 'Resume' : 'Pause';
     });
 
     function jump() {
@@ -108,20 +151,25 @@
       let obstaclePosition = game.offsetWidth;
 
       let moveInterval = setInterval(() => {
+        if (isPaused) return;
         if (obstaclePosition < -60) {
           clearInterval(moveInterval);
           game.removeChild(obstacle);
           score++;
-          scoreDisplay.textContent = `Score: ${score}`;
+          if (score > highScore) {
+            highScore = score;
+            localStorage.setItem('highScore', highScore);
+          }
+          scoreDisplay.textContent = `Score: ${score} | High Score: ${highScore}`;
         } else if (
-          obstaclePosition > 60 && obstaclePosition < 120 &&
+          obstaclePosition > parseInt(dino.style.left) && obstaclePosition < parseInt(dino.style.left) + 60 &&
           parseInt(dino.style.bottom) < 60
         ) {
           clearInterval(moveInterval);
           alert('Game Over! Your score: ' + score);
           location.reload();
         } else {
-          obstaclePosition -= 6;
+          obstaclePosition -= obstacleSpeed;
           obstacle.style.left = obstaclePosition + 'px';
         }
       }, 18);
